@@ -137,25 +137,6 @@ if [ -z "$messagecount" ]; then
   messagecount=0
 fi
 
-#decide output by return code
-if [ $status -eq 0 ] ; then
- if [ $runtime -gt $critical ] ; then
-   echo "CRITICAL: runtime "$runtime" bigger than critical runtime '"$critical"' | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
-   exit 2;
- fi;
- if [ $runtime -gt $warning ] ; then
-   echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
-   exit 1;
- fi;
- echo "OK: MAILBOX LIST in "$runtime" ms | value=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
- exit 0;
-else
- message=$(getCode $status)
- echo "CRITICAL: MAILBOX LIST failed with return code '"$status"' = '"$message"' in "$runtime" ms | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
- exit 2;
-fi;
-
-
 getCode () {
   case $1 in
     1)
@@ -203,3 +184,22 @@ getCode () {
       ;;
   esac
 }
+
+
+#decide output by return code
+if [ $status -eq 0 ] ; then
+ if [ $runtime -gt $critical ] ; then
+   echo "CRITICAL: runtime "$runtime" bigger than critical runtime '"$critical"' | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
+   exit 2;
+ fi;
+ if [ $runtime -gt $warning ] ; then
+   echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
+   exit 1;
+ fi;
+ echo "OK: MAILBOX LIST in "$runtime" ms | value=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
+ exit 0;
+else
+ message=$(getCode $status)
+ echo "CRITICAL: MAILBOX LIST failed with return code '"$status"' = '"$message"' in "$runtime" ms | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
+ exit 2;
+fi;
