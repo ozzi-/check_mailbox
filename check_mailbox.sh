@@ -1,6 +1,6 @@
 #!/bin/bash
-# Author: ozzi- - https://github.com/ozzi-/check_mailbox
-# Description: Icinga 2 check mailbox using imap / pop
+# Author: ozzi-
+# Description: Icinga 2 check imap
 
 # startup checks
 if [ -z "$BASH" ]; then
@@ -24,14 +24,18 @@ fqhost=""
 mailbox="INBOX"
 credential=""
 imap=1
+insecure=0
+verbose=0
 
 # Usage Info
 usage() {
-  echo '''Usage: check_mailbox [OPTIONS]
+  echo '''Usage: check_imap [OPTIONS]
   [OPTIONS]:
   -H HOST           Full host string, i.E. "imaps://mail.local.ch:993" OR "pop3://mail.local.ch:143"
   -C CREDENTIAL     Username:Password, i.E. "user2:horsestaplebattery" (default: no auth)
-  -M MAILBOX        Mailbox Name (default: INBOX)
+  -M MAILBOX        Mailbox Name, needed for IMAP(s) only (default: INBOX)
+  -I INSECURE       Allow insecure connections using IMAPs and POP3s (default: OFF)
+  -V VERBOSE        Use verbose mode of CURL for debugging (default: OFF)
   -c CRITICAL       Critical threshold for execution in milliseconds (default: 3500)
   -w WARNING        Warning threshold for execution in milliseconds (default: 2000)
   '''
@@ -39,7 +43,7 @@ usage() {
 
 #main
 #get options
-while getopts "H:C:M:c:w:" opt; do
+while getopts "H:C:M:IVc:w:" opt; do
   case $opt in
     c)
       critical=$OPTARG
@@ -55,6 +59,12 @@ while getopts "H:C:M:c:w:" opt; do
       ;;
     M)
       mailbox=$OPTARG
+      ;;
+    I)
+      insecure=1
+      ;;
+    V)
+      verbose=1
       ;;
     *)
       usage
@@ -87,6 +97,63 @@ else
   usage
   exit 3
 fi
+
+
+maxwait=$(bc <<< "scale = 10; ($critical+1500) / 1000")
+
+# Build the arg parameters
+insecurearg=""
+if [ $insecure -eq 1 ]; then
+ insecurearg=" --insecure "
+fi
+verbosearg=""
+if [ $verbose -eq 1 ]; then
+ verbosearg=" --verbose "
+fi
+credentialarg=""
+if [ ! -z "$credential" ] ; then
+  credentialarg=' --user "'$credential'"'
+fi
+
+
+#The actual curl
+start=$(echo $(($(date +%s%N)/1000000)))
+
+if [ $imap -eq 0 ]; then
+  body=$(eval curl --url "$fqhost" -X "LIST" $credentialarg -s --max-time $maxwait $insecurearg $verbosearg)
+  status=$?
+  body=$(echo "$body" | tail -1 | cut -d " " -f1)
+else
+  body=$(eval curl --url "$fqhost" -X "EXAMINE $mailbox" $credentialarg -s --max-time $maxwait $insecurearg $verbosearg)
+  status=$?
+  body=$(echo "$body" | head -1 | cut -d " " -f2)
+fi
+
+end=$(echo $(($(date +%s%N)/1000000)))
+runtime=$(($end-$start))
+
+messagecount=$body
+if [ -z "$messagecount" ]; then
+  messagecount=0
+fi
+
+#decide output by return code
+if [ $status -eq 0 ] ; then
+ if [ $runtime -gt $critical ] ; then
+   echo "CRITICAL: runtime "$runtime" bigger than critical runtime '"$critical"' | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
+   exit 2;
+ fi;
+ if [ $runtime -gt $warning ] ; then
+   echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
+   exit 1;
+ fi;
+ echo "OK: MAILBOX LIST in "$runtime" ms | value=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
+ exit 0;
+else
+ message=$(getCode $status)
+ echo "CRITICAL: MAILBOX LIST failed with return code '"$status"' = '"$message"' in "$runtime" ms | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
+ exit 2;
+fi;
 
 
 getCode () {
@@ -136,47 +203,3 @@ getCode () {
       ;;
   esac
 }
-
-maxwait=$(bc <<< "scale = 10; ($critical+1500) / 1000")
-
-start=$(echo $(($(date +%s%N)/1000000)))
-if [ $imap -eq 0 ]; then
-  if [ -z "$credential" ] ; then
-    body=$(curl --url "$fqhost" -X "LIST" -s --max-time $maxwait)
-  else
-    body=$(curl --url "$fqhost" --user "$credential" -X "LIST" -s --max-time $maxwait)
-  fi
-  status=$?
-  body=$(echo "$body" | tail -1 | cut -d " " -f1)
-else
-  if [ -z "$credential" ] ; then
-    body=$(curl --url "$fqhost" -X "EXAMINE $mailbox" -s --max-time $maxwait)
-  else
-    body=$(curl --url "$fqhost" --user "$credential" -X "EXAMINE $mailbox" -s --max-time $maxwait)
-  fi
-  status=$?
-  body=$(echo "$body" | head -1 | cut -d " " -f2)
-fi
-end=$(echo $(($(date +%s%N)/1000000)))
-runtime=$(($end-$start))
-messagecount=$body
-if [ -z "$messagecount" ]; then
-  messagecount=0
-fi
-#decide output by return code
-if [ $status -eq 0 ] ; then
- if [ $runtime -gt $critical ] ; then
-   echo "CRITICAL: runtime "$runtime" bigger than critical runtime '"$critical"' | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
-   exit 2;
- fi;
- if [ $runtime -gt $warning ] ; then
-   echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
-   exit 1;
- fi;
- echo "OK: MAILBOX LIST in "$runtime" ms | value=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
- exit 0;
-else
- message=$(getCode $status)
- echo "CRITICAL: MAILBOX LIST failed with return code '"$status"' = '"$message"' in "$runtime" ms | runtime=$runtime;$warning;$critical;0;$critical messagecount=$messagecount;"
- exit 2;
-fi;
