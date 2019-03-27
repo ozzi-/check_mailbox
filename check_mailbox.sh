@@ -27,7 +27,7 @@ imap=1
 
 # Usage Info
 usage() {
-  echo '''Usage: check_imap [OPTIONS]
+  echo '''Usage: check_mailbox [OPTIONS]
   [OPTIONS]:
   -H HOST           Full host string, i.E. "imaps://mail.local.ch:993" OR "pop3://mail.local.ch:143"
   -C CREDENTIAL     Username:Password, i.E. "user2:horsestaplebattery" (default: no auth)
