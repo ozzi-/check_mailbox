@@ -114,17 +114,20 @@ credentialarg=""
 if [ ! -z "$credential" ] ; then
   credentialarg=' --user "'$credential'"'
 fi
-
+commandarg='"LIST"'
+if [ $imap -eq 1 ] ; then
+  commandarg='"EXAMINE '$mailbox'"'
+fi
 
 #The actual curl
 start=$(echo $(($(date +%s%N)/1000000)))
 
 if [ $imap -eq 0 ]; then
-  body=$(eval curl --url "$fqhost" -X "LIST" $credentialarg -s --max-time $maxwait $insecurearg $verbosearg)
+  body=$(eval curl --url "$fqhost" -X $commandarg $credentialarg -s --max-time $maxwait $insecurearg $verbosearg)
   status=$?
   body=$(echo "$body" | tail -1 | cut -d " " -f1)
 else
-  body=$(eval curl --url "$fqhost" -X "EXAMINE $mailbox" $credentialarg -s --max-time $maxwait $insecurearg $verbosearg)
+  body=$(eval curl --url "$fqhost" -X $commandarg $credentialarg -s --max-time $maxwait $insecurearg $verbosearg)
   status=$?
   body=$(echo "$body" | head -1 | cut -d " " -f2)
 fi
