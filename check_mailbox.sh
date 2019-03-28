@@ -1,6 +1,6 @@
 #!/bin/bash
 # Author: ozzi-
-# Description: Icinga 2 check imap
+# Description: Icinga 2 check imap & pop3 mailboxes
 
 # startup checks
 if [ -z "$BASH" ]; then
@@ -196,7 +196,7 @@ if [ $status -eq 0 ] ; then
    echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime=$runtimems;$warning;$critical;0;$critical messagecount=$messagecount;"
    exit 1;
  fi;
- echo "OK: MAILBOX LIST in "$runtime" ms | value=$runtimems;$warning;$critical;0;$critical messagecount=$messagecount;"
+ echo "OK: MAILBOX LIST in "$runtime" ms | runtime=$runtimems;$warning;$critical;0;$critical messagecount=$messagecount;"
  exit 0;
 else
  message=$(getCode $status)
