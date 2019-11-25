@@ -9,6 +9,7 @@ check_imap [OPTIONS]
   -C CREDENTIAL     Username:Password, i.E. "user2:horsestaplebattery" (default: no auth)
   -M MAILBOX        Mailbox Name, needed for IMAP(s) only (default: INBOX)
   -I INSECURE       Allow insecure connections using IMAPs and POP3s (default: OFF)
+  -S SSL            Try to use SSL/TLS for the connection (default: OFF)
   -V VERBOSE        Use verbose mode of CURL for debugging (default: OFF)
   -c CRITICAL       Critical threshold for execution in milliseconds (default: 3500)
   -w WARNING        Warning threshold for execution in milliseconds (default: 2000)
@@ -63,6 +64,9 @@ object CheckCommand "check-mailbox" {
     "-H" = "$chm_host$"
     "-C" = "user:password"
     "-M" = "INBOX"
+    "-S" = {
+           set_if = "$ssl$"
+    }
     "-w" = "1000"
     "-c" = "2000"
   }

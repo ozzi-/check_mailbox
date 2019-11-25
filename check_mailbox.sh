@@ -25,6 +25,7 @@ mailbox="INBOX"
 credential=""
 imap=1
 insecure=0
+ssl=0
 verbose=0
 
 # Usage Info
@@ -35,6 +36,7 @@ usage() {
   -C CREDENTIAL     Username:Password, i.E. "user2:horsestaplebattery" (default: no auth)
   -M MAILBOX        Mailbox Name, needed for IMAP(s) only (default: INBOX)
   -I INSECURE       Allow insecure connections using IMAPs and POP3s (default: OFF)
+  -S SSL            Try to use SSL/TLS for the connection (default: OFF)
   -V VERBOSE        Use verbose mode of CURL for debugging (default: OFF)
   -c CRITICAL       Critical threshold for execution in milliseconds (default: 3500)
   -w WARNING        Warning threshold for execution in milliseconds (default: 2000)
@@ -43,7 +45,7 @@ usage() {
 
 #main
 #get options
-while getopts "H:C:M:IVc:w:" opt; do
+while getopts "H:C:M:ISVc:w:" opt; do
   case $opt in
     c)
       critical=$OPTARG
@@ -62,6 +64,9 @@ while getopts "H:C:M:IVc:w:" opt; do
       ;;
     I)
       insecure=1
+      ;;
+    S)
+      ssl=1
       ;;
     V)
       verbose=1
@@ -106,6 +111,10 @@ insecurearg=""
 if [ $insecure -eq 1 ]; then
  insecurearg=" --insecure "
 fi
+sslarg=""
+if [ $ssl -eq 1 ]; then
+ sslarg=" --ssl "
+fi
 verbosearg=""
 if [ $verbose -eq 1 ]; then
  verbosearg=" --verbose "
@@ -123,11 +132,11 @@ fi
 start=$(echo $(($(date +%s%N)/1000000)))
 
 if [ $imap -eq 0 ]; then
-  body=$(eval curl --url "$fqhost" -X $commandarg $credentialarg -s --max-time $maxwait $insecurearg $verbosearg)
+  body=$(eval curl --url "$fqhost" -X $commandarg $credentialarg -s --max-time $maxwait $sslarg $insecurearg $verbosearg)
   status=$?
   body=$(echo "$body" | tail -1 | cut -d " " -f1)
 else
-  body=$(eval curl --url "$fqhost" -X $commandarg $credentialarg -s --max-time $maxwait $insecurearg $verbosearg)
+  body=$(eval curl --url "$fqhost" -X $commandarg $credentialarg -s --max-time $maxwait $sslarg $insecurearg $verbosearg)
   status=$?
   body=$(echo "$body" | head -1 | cut -d " " -f2)
 fi
