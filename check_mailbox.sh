@@ -27,6 +27,8 @@ imap=1
 insecure=0
 ssl=0
 verbose=0
+min_messages=0
+max_messages=100000000
 
 # Usage Info
 usage() {
@@ -40,19 +42,15 @@ usage() {
   -V VERBOSE        Use verbose mode of CURL for debugging (default: OFF)
   -c CRITICAL       Critical threshold for execution in milliseconds (default: 3500)
   -w WARNING        Warning threshold for execution in milliseconds (default: 2000)
+  -n MIN_MESSAGES   Minimum expected number of messages in inbox (default: 0)
+  -N MAX_MESSAGES   Maximum expected number of messages in inbox (default: 100000000)
   '''
 }
 
 #main
 #get options
-while getopts "H:C:M:ISVc:w:" opt; do
+while getopts "H:C:M:ISVc:w:n:N:" opt; do
   case $opt in
-    c)
-      critical=$OPTARG
-      ;;
-    w)
-      warning=$OPTARG
-      ;;
     H)
       fqhost=$OPTARG
       ;;
@@ -70,6 +68,18 @@ while getopts "H:C:M:ISVc:w:" opt; do
       ;;
     V)
       verbose=1
+      ;;
+    c)
+      critical=$OPTARG
+      ;;
+    w)
+      warning=$OPTARG
+      ;;
+    n)
+      min_messages=$OPTARG
+      ;;
+    N)
+      max_messages=$OPTARG
       ;;
     *)
       usage
@@ -200,18 +210,22 @@ getCode () {
 
 #decide output by return code
 if [ $status -eq 0 ] ; then
- if [ $runtime -gt $critical ] ; then
-   echo "CRITICAL: runtime "$runtime" bigger than critical runtime '"$critical"' | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
-   exit 2;
- fi;
- if [ $runtime -gt $warning ] ; then
-   echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
-   exit 1;
- fi;
- echo "OK: MAILBOX LIST in "$runtime" ms | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
- exit 0;
+  if (( $messagecount < $min_messages || $max_messages < $messagecount )) ; then
+    echo "CRITICAL: $messagecount messages are in inbox, expected between $min_messages and $max_messages | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+    exit 2;
+  fi;
+  if [ $runtime -gt $critical ] ; then
+    echo "CRITICAL: runtime "$runtime" bigger than critical runtime '"$critical"' | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+    exit 2;
+  fi;
+  if [ $runtime -gt $warning ] ; then
+    echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+    exit 1;
+  fi;
+  echo "OK: MAILBOX LIST in "$runtime" ms | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+  exit 0;
 else
- message=$(getCode $status)
- echo "CRITICAL: MAILBOX LIST failed with return code '"$status"' = '"$message"' in "$runtime" ms | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
- exit 2;
+  message=$(getCode $status)
+  echo "CRITICAL: MAILBOX LIST failed with return code '"$status"' = '"$message"' in "$runtime" ms | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+  exit 2;
 fi;
