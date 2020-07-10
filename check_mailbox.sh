@@ -11,6 +11,10 @@ if [ ! -e "/usr/bin/which" ]; then
   echo "/usr/bin/which is missing."
   exit 3
 fi
+if [ ! -e "/usr/bin/bc" ]; then
+  echo "/usr/bin/bc is missing."
+  exit 3
+fi
 curl=$(which curl)
 if [ $? -ne 0 ]; then
   echo "Please install curl"
