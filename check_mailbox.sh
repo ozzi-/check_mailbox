@@ -148,7 +148,7 @@ if [ $imap -eq 0 ]; then
 else
   body=$(eval curl --url "$fqhost" -X $commandarg $credentialarg -s --max-time $maxwait $sslarg $insecurearg $verbosearg)
   status=$?
-  body=$(echo "$body" | head -1 | cut -d " " -f2)
+  body=$(echo "$body" | grep "EXISTS" | head -1 | cut -d " " -f2)
 fi
 
 end=$(echo $(($(date +%s%N)/1000000)))
