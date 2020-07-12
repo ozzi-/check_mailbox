@@ -211,21 +211,21 @@ getCode () {
 #decide output by return code
 if [ $status -eq 0 ] ; then
   if (( $messagecount < $min_messages || $max_messages < $messagecount )) ; then
-    echo "CRITICAL: $messagecount messages are in inbox, expected between $min_messages and $max_messages | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+    echo "CRITICAL: $messagecount messages are in inbox, expected between $min_messages and $max_messages | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount;$max_messages;$max_messages;$min_messages;$max_messages"
     exit 2;
   fi;
   if [ $runtime -gt $critical ] ; then
-    echo "CRITICAL: runtime "$runtime" bigger than critical runtime '"$critical"' | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+    echo "CRITICAL: runtime "$runtime" bigger than critical runtime '"$critical"' | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount;$max_messages;$max_messages;$min_messages;$max_messages"
     exit 2;
   fi;
   if [ $runtime -gt $warning ] ; then
-    echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+    echo "WARNING: runtime "$runtime" bigger than warning runtime '"$warning"' | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount;$max_messages;$max_messages;$min_messages;$max_messages"
     exit 1;
   fi;
-  echo "OK: MAILBOX LIST in "$runtime" ms | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+  echo "OK: MAILBOX LIST in "$runtime" ms | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount;$max_messages;$max_messages;$min_messages;$max_messages"
   exit 0;
 else
   message=$(getCode $status)
-  echo "CRITICAL: MAILBOX LIST failed with return code '"$status"' = '"$message"' in "$runtime" ms | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount"
+  echo "CRITICAL: MAILBOX LIST failed with return code '"$status"' = '"$message"' in "$runtime" ms | runtime="$runtime"ms;$warning;$critical;0;$critical messagecount=$messagecount;$max_messages;$max_messages;$min_messages;$max_messages"
   exit 2;
 fi;
