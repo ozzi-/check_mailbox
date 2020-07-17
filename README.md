@@ -13,6 +13,8 @@ check_imap [OPTIONS]
   -V VERBOSE        Use verbose mode of CURL for debugging (default: OFF)
   -c CRITICAL       Critical threshold for execution in milliseconds (default: 3500)
   -w WARNING        Warning threshold for execution in milliseconds (default: 2000)
+  -n MIN_MESSAGES   Minimum expected number of messages in inbox (default: 0)
+  -N MAX_MESSAGES   Maximum expected number of messages in inbox (default: 100000000)
 ```
 
 Example of connecting via pop3 on port 5050, setting a critical timeout of 3.2 seconds and providing username and password:
