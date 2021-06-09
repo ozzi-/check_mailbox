@@ -118,7 +118,7 @@ else
 fi
 
 
-maxwait=$(bc <<< "scale = 10; ($critical+1500) / 1000")
+maxwait=$(bc <<< "scale = 0; ($critical+1500) / 1000")
 
 # Build the arg parameters
 insecurearg=""
